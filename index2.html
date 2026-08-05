@@ -212,8 +212,10 @@
         }
 
         const data = await res.json();
+        const db = data && data.db ? data.db : "n/a";
+        const counter = data && Number.isFinite(data.counter) ? data.counter : "n/a";
         const ts = data && data.timestamp ? data.timestamp : "n/a";
-        statusEl.textContent = `Statut: OK (timestamp: ${ts})`;
+        statusEl.textContent = `Statut: OK | DB: ${db} | compteur: ${counter} | timestamp: ${ts}`;
       } catch (error) {
         statusEl.textContent = "Statut: echec de connexion a la function Netlify.";
       }

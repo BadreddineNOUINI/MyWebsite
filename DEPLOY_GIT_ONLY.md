@@ -5,6 +5,7 @@
 - Frontend: `index2.html`
 - Config Netlify: `netlify.toml`
 - Backend Function: `netlify/functions/ping.js`
+- Storage Netlify: `@netlify/blobs` (installe automatiquement par Netlify via `package.json`)
 
 ## Deploiement
 
@@ -14,14 +15,26 @@
    - `/` (la page CV)
    - `/.netlify/functions/ping` (JSON backend)
 
+## Donnee stockee en base Netlify
+
+La function `ping` utilise Netlify Blobs pour stocker un compteur persistant:
+- cle: `counter`
+- store: `ping_data`
+
+A chaque appel de `/.netlify/functions/ping`, la valeur augmente de `+1`.
+
 ## Verification depuis la page
 
 La page contient un bloc **Backend Netlify** avec un bouton:
 - `Tester /.netlify/functions/ping`
 
 Le statut affiche:
-- `OK` si la function repond
+- `OK` si la function repond, avec DB + valeur du compteur
 - `erreur HTTP` ou `echec de connexion` sinon
+
+Exemple de verification rapide:
+1. Ouvrir `/.netlify/functions/ping` deux fois.
+2. Verifier que `counter` passe de `1` a `2` (ou de `N` a `N+1`).
 
 ## Parametres Netlify UI (si necessaire)
 
