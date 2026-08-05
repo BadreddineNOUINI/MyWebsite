@@ -250,6 +250,38 @@ body {
   line-height: 1.5;
 }
 
+.profile-group {
+  margin: 0 0 10px;
+}
+
+.profile-group h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+
+.bullet-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.info-row {
+  margin: 0 0 6px;
+}
+
+.info-row strong {
+  color: var(--text);
+}
+
+.block-content a {
+  color: var(--primary);
+  text-underline-offset: 3px;
+}
+
 .admin-shell {
   padding: 32px 0 44px;
 }

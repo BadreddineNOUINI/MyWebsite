@@ -19,10 +19,128 @@ const themeMap = {
 let currentCv = null;
 let themes = [];
 
-function toText(block) {
+function createInfoRow(label, value) {
+  if (!value) return null;
+  const row = document.createElement("p");
+  row.className = "info-row";
+  row.innerHTML = `<strong>${label}:</strong> ${value}`;
+  return row;
+}
+
+function createList(title, items = []) {
+  const safe = (items || []).filter(Boolean);
+  if (!safe.length) return null;
+  const wrap = document.createElement("section");
+  wrap.className = "profile-group";
+  const heading = document.createElement("h4");
+  heading.textContent = title;
+  const ul = document.createElement("ul");
+  ul.className = "bullet-list";
+  safe.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+  wrap.append(heading, ul);
+  return wrap;
+}
+
+function renderStructuredProfile(container, cv) {
+  const content = container.querySelector(".block-content");
+  content.innerHTML = "";
+
+  const groups = [
+    createList("Compétences", cv.skills),
+    createList("Outils", cv.tools),
+    createList("Diplômes", cv.diplomas),
+    createList("Certifications", cv.certifications),
+    createList("Langues", cv.languages)
+  ].filter(Boolean);
+
+  groups.forEach((group) => content.appendChild(group));
+
+  if (cv.links && cv.links.length) {
+    const linkWrap = document.createElement("section");
+    linkWrap.className = "profile-group";
+    const heading = document.createElement("h4");
+    heading.textContent = "Liens utiles";
+    const ul = document.createElement("ul");
+    ul.className = "bullet-list";
+
+    cv.links.forEach((entry) => {
+      if (!entry || !entry.url) return;
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = entry.url;
+      a.target = "_blank";
+      a.rel = "noreferrer noopener";
+      a.textContent = entry.label || entry.url;
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+
+    linkWrap.append(heading, ul);
+    content.appendChild(linkWrap);
+  }
+}
+
+function renderBlockContent(container, block) {
+  const content = container.querySelector(".block-content");
   const c = block.content || {};
-  if (typeof c.text === "string") return c.text;
-  return JSON.stringify(c, null, 2);
+  content.innerHTML = "";
+
+  if (block.type === "summary") {
+    content.textContent = c.text || "";
+    return;
+  }
+
+  if (block.type === "experience_short" || block.type === "experience_detailed") {
+    const role = createInfoRow("Poste", c.role);
+    const company = createInfoRow("Entreprise", c.company);
+    const period = createInfoRow("Période", c.period);
+    const detail = createInfoRow(block.type === "experience_short" ? "Impact" : "Détails", c.impact || c.details);
+    [role, company, period, detail].filter(Boolean).forEach((x) => content.appendChild(x));
+    return;
+  }
+
+  if (block.type === "diploma") {
+    [
+      createInfoRow("Diplôme", c.degree),
+      createInfoRow("Établissement", c.school),
+      createInfoRow("Année", c.year)
+    ]
+      .filter(Boolean)
+      .forEach((x) => content.appendChild(x));
+    return;
+  }
+
+  if (block.type === "certification") {
+    [
+      createInfoRow("Certification", c.name),
+      createInfoRow("Organisme", c.org),
+      createInfoRow("Année", c.year)
+    ]
+      .filter(Boolean)
+      .forEach((x) => content.appendChild(x));
+    return;
+  }
+
+  if (block.type === "tools" || block.type === "skills") {
+    const list = createList("", Array.isArray(c.items) ? c.items : []);
+    if (list) {
+      content.appendChild(list.querySelector(".bullet-list"));
+    } else {
+      content.textContent = c.text || "";
+    }
+    return;
+  }
+
+  if (typeof c.text === "string" && c.text.trim()) {
+    content.textContent = c.text;
+    return;
+  }
+
+  content.textContent = JSON.stringify(c, null, 2);
 }
 
 function renderBlocks(cv) {
@@ -30,16 +148,7 @@ function renderBlocks(cv) {
 
   const base = blockTemplate.content.firstElementChild.cloneNode(true);
   base.querySelector(".block-title").textContent = "Profil structuré";
-  const lines = [];
-  if (cv.skills && cv.skills.length) lines.push(`Compétences: ${cv.skills.join(", ")}`);
-  if (cv.tools && cv.tools.length) lines.push(`Outils: ${cv.tools.join(", ")}`);
-  if (cv.diplomas && cv.diplomas.length) lines.push(`Diplômes: ${cv.diplomas.join(" | ")}`);
-  if (cv.certifications && cv.certifications.length) lines.push(`Certifications: ${cv.certifications.join(" | ")}`);
-  if (cv.languages && cv.languages.length) lines.push(`Langues: ${cv.languages.join(", ")}`);
-  if (cv.links && cv.links.length) {
-    lines.push(`Liens: ${cv.links.map((x) => `${x.label}: ${x.url}`).join(" | ")}`);
-  }
-  base.querySelector(".block-content").textContent = lines.join("\n");
+  renderStructuredProfile(base, cv);
   renderEl.appendChild(base);
 
   (cv.blocks || [])
@@ -48,7 +157,7 @@ function renderBlocks(cv) {
     .forEach((block) => {
       const node = blockTemplate.content.firstElementChild.cloneNode(true);
       node.querySelector(".block-title").textContent = block.title || block.type;
-      node.querySelector(".block-content").textContent = toText(block);
+      renderBlockContent(node, block);
       renderEl.appendChild(node);
     });
 }

@@ -70,6 +70,114 @@ function toPreviewText(block) {
   return JSON.stringify(c, null, 2);
 }
 
+function blockTemplateByType(type) {
+  if (type === "summary") return { text: "" };
+  if (type === "experience_short") return { role: "", company: "", period: "", impact: "" };
+  if (type === "experience_detailed") return { role: "", company: "", period: "", details: "" };
+  if (type === "diploma") return { degree: "", school: "", year: "" };
+  if (type === "certification") return { name: "", org: "", year: "" };
+  if (type === "tools" || type === "skills") return { items: [] };
+  return { text: "" };
+}
+
+function createInfoRow(label, value) {
+  if (!value) return null;
+  const row = document.createElement("p");
+  row.className = "info-row";
+  row.innerHTML = `<strong>${label}:</strong> ${value}`;
+  return row;
+}
+
+function createList(title, items = []) {
+  const safe = (items || []).filter(Boolean);
+  if (!safe.length) return null;
+  const wrap = document.createElement("section");
+  wrap.className = "profile-group";
+  if (title) {
+    const heading = document.createElement("h4");
+    heading.textContent = title;
+    wrap.appendChild(heading);
+  }
+  const ul = document.createElement("ul");
+  ul.className = "bullet-list";
+  safe.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+  wrap.appendChild(ul);
+  return wrap;
+}
+
+function renderStructuredPreview(content, cv) {
+  content.innerHTML = "";
+  [
+    createList("Compétences", cv.skills),
+    createList("Outils", cv.tools),
+    createList("Diplômes", cv.diplomas),
+    createList("Certifications", cv.certifications),
+    createList("Langues", cv.languages)
+  ]
+    .filter(Boolean)
+    .forEach((group) => content.appendChild(group));
+
+  if (cv.links && cv.links.length) {
+    const list = createList(
+      "Liens utiles",
+      cv.links.map((x) => `${x.label || "Lien"}: ${x.url || ""}`)
+    );
+    if (list) content.appendChild(list);
+  }
+}
+
+function renderBlockPreview(content, block) {
+  const c = block.content || {};
+  content.innerHTML = "";
+
+  if (block.type === "summary") {
+    content.textContent = c.text || "";
+    return;
+  }
+
+  if (block.type === "experience_short" || block.type === "experience_detailed") {
+    [
+      createInfoRow("Poste", c.role),
+      createInfoRow("Entreprise", c.company),
+      createInfoRow("Période", c.period),
+      createInfoRow(block.type === "experience_short" ? "Impact" : "Détails", c.impact || c.details)
+    ]
+      .filter(Boolean)
+      .forEach((row) => content.appendChild(row));
+    return;
+  }
+
+  if (block.type === "diploma") {
+    [createInfoRow("Diplôme", c.degree), createInfoRow("Établissement", c.school), createInfoRow("Année", c.year)]
+      .filter(Boolean)
+      .forEach((row) => content.appendChild(row));
+    return;
+  }
+
+  if (block.type === "certification") {
+    [createInfoRow("Certification", c.name), createInfoRow("Organisme", c.org), createInfoRow("Année", c.year)]
+      .filter(Boolean)
+      .forEach((row) => content.appendChild(row));
+    return;
+  }
+
+  if (block.type === "tools" || block.type === "skills") {
+    const list = createList("", Array.isArray(c.items) ? c.items : []);
+    if (list) {
+      content.appendChild(list.querySelector(".bullet-list"));
+    } else {
+      content.textContent = c.text || "";
+    }
+    return;
+  }
+
+  content.textContent = toPreviewText(block);
+}
+
 function showEditor(cv) {
   emptyEditor.classList.add("hidden");
   editorWrap.classList.remove("hidden");
@@ -134,16 +242,7 @@ function renderPreview(cv) {
   const structured = document.createElement("section");
   structured.className = "public-block";
   structured.innerHTML = "<h3 class=\"block-title\">Profil structuré</h3><div class=\"block-content\"></div>";
-  const lines = [];
-  if (cv.skills && cv.skills.length) lines.push(`Compétences: ${cv.skills.join(", ")}`);
-  if (cv.tools && cv.tools.length) lines.push(`Outils: ${cv.tools.join(", ")}`);
-  if (cv.diplomas && cv.diplomas.length) lines.push(`Diplômes: ${cv.diplomas.join(" | ")}`);
-  if (cv.certifications && cv.certifications.length) lines.push(`Certifications: ${cv.certifications.join(" | ")}`);
-  if (cv.languages && cv.languages.length) lines.push(`Langues: ${cv.languages.join(", ")}`);
-  if (cv.links && cv.links.length) {
-    lines.push(`Liens: ${cv.links.map((x) => `${x.label}: ${x.url}`).join(" | ")}`);
-  }
-  structured.querySelector(".block-content").textContent = lines.join("\n");
+  renderStructuredPreview(structured.querySelector(".block-content"), cv);
   previewCard.appendChild(structured);
 
   (cv.blocks || [])
@@ -153,7 +252,7 @@ function renderPreview(cv) {
       const section = document.createElement("section");
       section.className = "public-block";
       section.innerHTML = `<h3 class=\"block-title\">${block.title || blockTitles[block.type] || block.type}</h3><div class=\"block-content\"></div>`;
-      section.querySelector(".block-content").textContent = toPreviewText(block);
+      renderBlockPreview(section.querySelector(".block-content"), block);
       previewCard.appendChild(section);
     });
 }
@@ -246,7 +345,7 @@ function bindPalette() {
         title: blockTitles[type] || type,
         enabled: true,
         order: cv.blocks.length,
-        content: { text: "" }
+        content: blockTemplateByType(type)
       });
       renderBlocks(cv);
       renderPreview(cv);
