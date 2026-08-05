@@ -1,4 +1,4 @@
-const PDFDocument = require("pdfkit");
+const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 const { json } = require("./_lib/response");
 const { getCV, getDefaultPublishedCV } = require("./_lib/repository");
 const { requireAdmin } = require("./_lib/auth");
@@ -10,10 +10,7 @@ function themeColors(theme) {
 }
 
 function addHeading(doc, text, colors) {
-  doc.fillColor(colors.primary).font("Helvetica-Bold").fontSize(14).text(text.toUpperCase(), { underline: false });
-  doc.moveDown(0.3);
-  doc.strokeColor(colors.primary).lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-  doc.moveDown(0.5);
+  return { text: text.toUpperCase(), color: colors.primary, size: 14, bold: true, spacingAfter: 8 };
 }
 
 function blockText(block) {
@@ -42,13 +39,42 @@ function safeFilename(name) {
   return String(name || "CV").replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 80);
 }
 
+function toRgb(hex) {
+  const value = String(hex || "#000000").replace("#", "");
+  const r = Number.parseInt(value.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(value.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(value.slice(4, 6), 16) / 255;
+  return rgb(r || 0, g || 0, b || 0);
+}
+
+function wrapText(text, maxChars) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length <= maxChars) {
+      line = candidate;
+    } else {
+      if (line) lines.push(line);
+      line = word;
+    }
+  });
+
+  if (line) lines.push(line);
+  return lines;
+}
+
 async function readCv(event) {
   const id = event.queryStringParameters && event.queryStringParameters.id;
   if (id) {
-    const auth = requireAdmin(event);
-    if (!auth.ok) return { error: auth.response };
     const cv = await getCV(event, id);
     if (!cv) return { error: json(404, { ok: false, error: "CV introuvable" }) };
+    const auth = requireAdmin(event);
+    if (!auth.ok && cv.status !== "published") {
+      return { error: auth.response };
+    }
     return { cv };
   }
 
@@ -64,42 +90,105 @@ exports.handler = async function handler(event) {
   if (result.error) return result.error;
   const cv = result.cv;
   const colors = themeColors(cv.theme);
+  const pdf = await PDFDocument.create();
+  const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const fontItalic = await pdf.embedFont(StandardFonts.HelveticaOblique);
 
-  const doc = new PDFDocument({ size: "A4", margin: 50 });
-  const chunks = [];
-  doc.on("data", (chunk) => chunks.push(chunk));
+  let page = pdf.addPage([595.28, 841.89]);
+  let y = 792;
+  const left = 48;
+  const right = 548;
 
-  doc.rect(0, 0, doc.page.width, doc.page.height).fill(colors.bg);
-  doc.fillColor(colors.text).font("Helvetica-Bold").fontSize(28).text(cv.fullName || cv.title, 50, 52);
-  doc.fillColor(colors.muted).font("Helvetica").fontSize(12).text(cv.role || "", 50, 92);
-  doc.moveDown(1.8);
+  function ensureSpace(lines = 1, lineHeight = 15) {
+    const needed = lines * lineHeight;
+    if (y - needed < 52) {
+      page = pdf.addPage([595.28, 841.89]);
+      y = 792;
+    }
+  }
+
+  page.drawRectangle({ x: 0, y: 0, width: page.getWidth(), height: page.getHeight(), color: toRgb(colors.bg) });
+
+  page.drawText(cv.fullName || cv.title || "CV", {
+    x: left,
+    y,
+    size: 27,
+    font: fontBold,
+    color: toRgb(colors.text)
+  });
+  y -= 32;
+
+  page.drawText(cv.role || "", {
+    x: left,
+    y,
+    size: 12,
+    font: fontRegular,
+    color: toRgb(colors.muted)
+  });
+  y -= 28;
 
   if (cv.summary) {
-    addHeading(doc, "Resume professionnel", colors);
-    doc.fillColor(colors.text).font("Helvetica").fontSize(11.5).text(cv.summary, { lineGap: 3 });
-    doc.moveDown(0.8);
+    ensureSpace(6);
+    const heading = addHeading(null, "Resume professionnel", colors);
+    page.drawText(heading.text, {
+      x: left,
+      y,
+      size: heading.size,
+      font: fontBold,
+      color: toRgb(heading.color)
+    });
+    y -= heading.spacingAfter;
+
+    const summaryLines = wrapText(cv.summary, 92);
+    ensureSpace(summaryLines.length + 1, 14);
+    summaryLines.forEach((line) => {
+      page.drawText(line, { x: left, y, size: 11, font: fontRegular, color: toRgb(colors.text) });
+      y -= 14;
+    });
+    y -= 8;
   }
 
   if (cv.blocks && cv.blocks.length) {
-    addHeading(doc, "Sections", colors);
-    cv.blocks
-      .filter((b) => b.enabled !== false)
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach((block) => {
-        doc.fillColor(colors.primary).font("Helvetica-Bold").fontSize(11.2).text(block.title || block.type);
-        doc.fillColor(colors.text).font("Helvetica").fontSize(10.5).text(blockText(block), { lineGap: 2 });
-        doc.moveDown(0.7);
+    ensureSpace(3);
+    const heading = addHeading(null, "Sections", colors);
+    page.drawText(heading.text, {
+      x: left,
+      y,
+      size: heading.size,
+      font: fontBold,
+      color: toRgb(heading.color)
+    });
+    y -= 10;
+
+    const blocks = cv.blocks.filter((b) => b.enabled !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
+    blocks.forEach((block) => {
+      const title = block.title || block.type;
+      const text = blockText(block);
+      const lines = wrapText(text, 96);
+      ensureSpace(lines.length + 3, 14);
+
+      page.drawText(title, { x: left, y, size: 11.2, font: fontBold, color: toRgb(colors.primary) });
+      y -= 14;
+
+      lines.forEach((line) => {
+        page.drawText(line, { x: left + 6, y, size: 10.5, font: fontRegular, color: toRgb(colors.text) });
+        y -= 13;
       });
+      y -= 6;
+    });
   }
 
-  const footerY = doc.page.height - 40;
-  doc.fillColor(colors.muted).font("Helvetica-Oblique").fontSize(9).text("Generated by CV Manager", 50, footerY);
-  doc.end();
-
-  const buffer = await new Promise((resolve, reject) => {
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+  page.drawText("Generated by CV Manager", {
+    x: left,
+    y: 28,
+    size: 9,
+    font: fontItalic,
+    color: toRgb(colors.muted)
   });
+
+  const bytes = await pdf.save();
+  const buffer = Buffer.from(bytes);
 
   const fileName = `CV_${safeFilename(cv.fullName || cv.title)}.pdf`;
   return {
