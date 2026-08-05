@@ -1,9 +1,15 @@
 {
-  "name": "netlify-p1",
+  "name": "cv-manager-netlify",
   "private": true,
   "version": "1.0.0",
-  "description": "Minimal Netlify frontend + function with blobs storage",
+  "description": "Professional CV management app (admin + public + pdf) for Netlify",
+  "scripts": {
+    "build": "echo \"Static app + Netlify Functions\"",
+    "start": "echo \"Use Netlify deploy previews\""
+  },
   "dependencies": {
-    "@netlify/blobs": "^10.0.8"
+    "@netlify/blobs": "^10.7.12",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3"
   }
 }

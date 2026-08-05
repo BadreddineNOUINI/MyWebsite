@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CV Manager - Administration</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body class="admin-body theme-executive">
+  <div class="bg-decor"></div>
+  <main class="shell admin-shell">
+    <section class="auth-panel" id="authPanel">
+      <h1>Connexion administrateur</h1>
+      <p>Authentification sécurisée pour gérer les CV publiés.</p>
+      <form id="loginForm" class="stack">
+        <label>Login
+          <input type="text" name="username" placeholder="admin" required />
+        </label>
+        <label>Mot de passe
+          <input type="password" name="password" placeholder="••••••••" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Se connecter</button>
+      </form>
+      <p class="status-line" id="authStatus"></p>
+    </section>
+
+    <section class="admin-app hidden" id="adminApp">
+      <header class="admin-topbar">
+        <div>
+          <p class="eyebrow">Dashboard admin</p>
+          <h1>Gestion de CV</h1>
+        </div>
+        <div class="topbar-actions">
+          <button id="createCvBtn" class="btn btn-primary">Créer un CV</button>
+          <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+        </div>
+      </header>
+
+      <section class="dashboard-grid">
+        <article class="panel">
+          <h2>Liste des CV</h2>
+          <p class="panel-sub">Brouillon, publié, défaut. Toutes les actions en un clic.</p>
+          <div id="cvList" class="cv-list"></div>
+        </article>
+
+        <article class="panel editor-panel">
+          <h2>Éditeur</h2>
+          <p class="panel-sub">Builder par blocs, live preview, thèmes premium.</p>
+
+          <div id="emptyEditor" class="empty-state">Sélectionnez un CV pour commencer.</div>
+
+          <div id="editorWrap" class="hidden">
+            <div class="editor-toolbar">
+              <label>Titre
+                <input id="cvTitle" type="text" />
+              </label>
+              <label>Nom complet
+                <input id="cvFullName" type="text" />
+              </label>
+              <label>Poste
+                <input id="cvRole" type="text" />
+              </label>
+              <label>Thème
+                <select id="cvTheme">
+                  <option value="executive">Executive Slate</option>
+                  <option value="neon_grid">Neon Grid</option>
+                  <option value="atelier">Atelier Editorial</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Résumé professionnel
+              <textarea id="cvSummary" rows="4"></textarea>
+            </label>
+
+            <div class="editor-toolbar">
+              <label>Compétences (une par ligne)
+                <textarea id="cvSkills" rows="3"></textarea>
+              </label>
+              <label>Outils (une par ligne)
+                <textarea id="cvTools" rows="3"></textarea>
+              </label>
+              <label>Diplômes (une par ligne)
+                <textarea id="cvDiplomas" rows="3"></textarea>
+              </label>
+              <label>Certifications (une par ligne)
+                <textarea id="cvCertifications" rows="3"></textarea>
+              </label>
+              <label>Langues (une par ligne)
+                <textarea id="cvLanguages" rows="3"></textarea>
+              </label>
+              <label>Liens utiles (format: Label|URL, une ligne)
+                <textarea id="cvLinks" rows="3"></textarea>
+              </label>
+            </div>
+
+            <div class="editor-actions">
+              <button id="saveCvBtn" class="btn btn-primary">Enregistrer</button>
+              <button id="publishCvBtn" class="btn btn-secondary">Publier / Dépublier</button>
+              <button id="defaultCvBtn" class="btn btn-secondary">Définir par défaut</button>
+              <button id="downloadPdfBtn" class="btn btn-secondary">Télécharger PDF</button>
+              <button id="deleteCvBtn" class="btn btn-danger">Supprimer</button>
+            </div>
+
+            <div class="builder-grid">
+              <section class="palette panel-mini">
+                <h3>Palette de blocs</h3>
+                <div class="palette-buttons" id="paletteButtons"></div>
+              </section>
+
+              <section class="blocks panel-mini">
+                <h3>Blocs du CV</h3>
+                <p class="small">Glissez-déposez pour réorganiser.</p>
+                <div id="blockList" class="block-list"></div>
+              </section>
+
+              <section class="preview panel-mini">
+                <h3>Preview live</h3>
+                <article id="previewCard" class="cv-render"></article>
+              </section>
+            </div>
+            <p class="status-line" id="editorStatus"></p>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <template id="cvCardTemplate">
+    <article class="cv-item">
+      <div>
+        <h3 class="cv-item-title"></h3>
+        <p class="cv-item-meta"></p>
+      </div>
+      <div class="cv-item-actions"></div>
+    </article>
+  </template>
+
+  <template id="blockItemTemplate">
+    <article class="block-item" draggable="true">
+      <div class="block-head">
+        <strong class="block-name"></strong>
+        <div class="block-controls"></div>
+      </div>
+      <label>Titre bloc
+        <input class="block-title" type="text" />
+      </label>
+      <label>Contenu (JSON simple)
+        <textarea class="block-content" rows="4"></textarea>
+      </label>
+    </article>
+  </template>
+
+  <script type="module" src="/assets/js/admin-app.js"></script>
+</body>
+</html>

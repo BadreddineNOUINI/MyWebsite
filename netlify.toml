@@ -2,7 +2,10 @@
   publish = "."
   functions = "netlify/functions"
 
-[[redirects]]
-  from = "/"
-  to = "/index2.html"
-  status = 200
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

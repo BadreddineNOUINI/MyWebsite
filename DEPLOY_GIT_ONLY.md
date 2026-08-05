@@ -1,61 +1,33 @@
-# Deploy Netlify via Git only (sans installation locale)
+# Deploy Git only - CV Manager
 
-## Ce repo est deja pret
+## Objectif
 
-- Frontend: `index2.html`
-- Config Netlify: `netlify.toml`
-- Backend Function: `netlify/functions/ping.js`
-- Storage Netlify: `@netlify/blobs` (installe automatiquement par Netlify via `package.json`)
+Déployer sans installation locale via push Git vers Netlify.
 
-## Deploiement
+## Étapes
 
-1. Commit + push vers ton repository Git.
-2. Netlify detecte le commit et lance le deploy automatiquement.
-3. Une fois en ligne, teste:
-   - `/` (la page CV)
-   - `/.netlify/functions/ping` (JSON backend)
+1. Pousser ce code sur le repository connecté à Netlify.
+2. Dans Netlify UI, renseigner les variables d'environnement du README.
+3. Relancer un deploy si nécessaire.
+4. Tester:
+   - `/` (CV public par défaut)
+   - `/admin.html` (back-office)
 
-## Donnee stockee en base Netlify
+## Identifiants admin
 
-La function `ping` utilise Netlify Blobs pour stocker un compteur persistant:
-- cle: `counter`
-- store: `ping_data`
+- Login: `ADMIN_USERNAME`
+- Mot de passe: celui correspondant à `ADMIN_PASSWORD_HASH` (ou `ADMIN_PASSWORD`)
 
-A chaque appel de `/.netlify/functions/ping`, la valeur augmente de `+1`.
+## Sanity checks post-deploy
 
-## Verification depuis la page
+1. Connexion admin OK
+2. Création d'un CV OK
+3. Ajout/réorganisation des blocs OK
+4. Publication + CV par défaut OK
+5. Page publique affiche le bon CV
+6. Téléchargement PDF OK
 
-La page contient un bloc **Backend Netlify** avec un bouton:
-- `Tester /.netlify/functions/ping`
+## Notes infra
 
-Le statut affiche:
-- `OK` si la function repond, avec DB + valeur du compteur
-- `erreur HTTP` ou `echec de connexion` sinon
-
-Exemple de verification rapide:
-1. Ouvrir `/.netlify/functions/ping` deux fois.
-2. Verifier que `counter` passe de `1` a `2` (ou de `N` a `N+1`).
-
-## Depannage Blobs
-
-Si tu vois une erreur du type "environment has not been configured to use Netlify Blobs":
-
-1. Ouvre le projet dans Netlify UI.
-2. Va dans Site configuration > Environment variables.
-3. Ajoute les variables suivantes:
-   - `NETLIFY_BLOBS_SITE_ID` = Project ID (visible dans Project information)
-   - `NETLIFY_BLOBS_TOKEN` = Personal Access Token Netlify
-4. Relance un deploy depuis le dernier commit.
-
-Note:
-- La function tente d'abord la configuration automatique Netlify.
-- Si elle n'est pas disponible, elle bascule sur ces variables d'environnement.
-
-## Parametres Netlify UI (si necessaire)
-
-- Base directory: vide
-- Build command: vide
-- Publish directory: `.`
-- Functions directory: `netlify/functions`
-
-Le fichier `netlify.toml` definit deja ces valeurs.
+- Si `DATABASE_URL` est défini: stockage SQL prioritaire
+- Sinon: fallback Netlify Blobs

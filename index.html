@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CV Manager - Profil public</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body class="theme-executive public-body">
+  <div class="bg-decor"></div>
+  <header class="public-header shell">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <strong>CV Manager</strong>
+    </div>
+    <nav>
+      <a class="ghost-link" href="/admin.html">Admin</a>
+      <a class="btn btn-primary" href="/.netlify/functions/cv-pdf">Télécharger PDF</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero-card">
+      <p class="eyebrow">CV publié par défaut</p>
+      <h1 id="cvName">Chargement...</h1>
+      <p class="hero-role" id="cvRole"></p>
+      <p class="hero-summary" id="cvSummary"></p>
+      <div class="hero-meta" id="cvMeta"></div>
+    </section>
+
+    <section class="public-layout">
+      <article class="cv-render" id="cvRender"></article>
+      <aside class="theme-panel">
+        <h2>Thème appliqué</h2>
+        <p id="themeLabel">-</p>
+        <div class="theme-swatches">
+          <button class="swatch" data-theme="executive">Executive Slate</button>
+          <button class="swatch" data-theme="neon_grid">Neon Grid</button>
+          <button class="swatch" data-theme="atelier">Atelier Editorial</button>
+        </div>
+        <a id="pdfLink" class="btn btn-secondary" href="/.netlify/functions/cv-pdf">Télécharger le PDF</a>
+      </aside>
+    </section>
+  </main>
+
+  <template id="blockTemplate">
+    <section class="public-block">
+      <h3 class="block-title"></h3>
+      <div class="block-content"></div>
+    </section>
+  </template>
+
+  <script type="module" src="/assets/js/public-app.js"></script>
+</body>
+</html>
