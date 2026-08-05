@@ -111,6 +111,12 @@
             <h2>Certifications</h2>
             <ul id="certificationsList"></ul>
           </section>
+          <section class="card">
+            <h2>Backend Netlify</h2>
+            <p class="small">Test de l'endpoint serverless apres deploiement Git.</p>
+            <button class="toggle" id="pingApiBtn" type="button">Tester /.netlify/functions/ping</button>
+            <p class="small" id="apiStatus">Statut: en attente de test.</p>
+          </section>
         </aside>
         <section class="xp">
           <div class="job">
@@ -188,6 +194,35 @@
       root.setAttribute('data-theme', next);
       localStorage.setItem('cv-theme', next);
     });
+
+    async function checkBackend() {
+      const statusEl = document.getElementById("apiStatus");
+      if (!statusEl) return;
+      statusEl.textContent = "Statut: verification en cours...";
+
+      try {
+        const res = await fetch("/.netlify/functions/ping", {
+          method: "GET",
+          headers: { "accept": "application/json" }
+        });
+
+        if (!res.ok) {
+          statusEl.textContent = `Statut: erreur HTTP ${res.status}`;
+          return;
+        }
+
+        const data = await res.json();
+        const ts = data && data.timestamp ? data.timestamp : "n/a";
+        statusEl.textContent = `Statut: OK (timestamp: ${ts})`;
+      } catch (error) {
+        statusEl.textContent = "Statut: echec de connexion a la function Netlify.";
+      }
+    }
+
+    const pingApiBtn = document.getElementById("pingApiBtn");
+    if (pingApiBtn) {
+      pingApiBtn.addEventListener("click", checkBackend);
+    }
   </script>
 </body>
 </html>
