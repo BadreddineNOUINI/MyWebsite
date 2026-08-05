@@ -36,6 +36,21 @@ Exemple de verification rapide:
 1. Ouvrir `/.netlify/functions/ping` deux fois.
 2. Verifier que `counter` passe de `1` a `2` (ou de `N` a `N+1`).
 
+## Depannage Blobs
+
+Si tu vois une erreur du type "environment has not been configured to use Netlify Blobs":
+
+1. Ouvre le projet dans Netlify UI.
+2. Va dans Site configuration > Environment variables.
+3. Ajoute les variables suivantes:
+   - `NETLIFY_BLOBS_SITE_ID` = Project ID (visible dans Project information)
+   - `NETLIFY_BLOBS_TOKEN` = Personal Access Token Netlify
+4. Relance un deploy depuis le dernier commit.
+
+Note:
+- La function tente d'abord la configuration automatique Netlify.
+- Si elle n'est pas disponible, elle bascule sur ces variables d'environnement.
+
 ## Parametres Netlify UI (si necessaire)
 
 - Base directory: vide

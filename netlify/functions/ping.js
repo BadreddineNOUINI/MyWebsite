@@ -1,8 +1,28 @@
-const { getStore } = require("@netlify/blobs");
+const { connectLambda, getStore } = require("@netlify/blobs");
 
-exports.handler = async function handler() {
+function buildStore(event) {
+  // In Netlify Lambda compatibility mode, Blobs context must be connected manually.
+  if (event) {
+    connectLambda(event);
+  }
+
+  const siteID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_ACCESS_TOKEN;
+
+  if (siteID && token) {
+    return getStore({
+      name: "ping_data",
+      siteID,
+      token
+    });
+  }
+
+  return getStore("ping_data");
+}
+
+exports.handler = async function handler(event) {
   try {
-    const store = getStore("ping_data");
+    const store = buildStore(event);
     const rawCounter = await store.get("counter");
     const previous = Number.parseInt(rawCounter ?? "0", 10);
     const safePrevious = Number.isFinite(previous) ? previous : 0;
@@ -35,6 +55,8 @@ exports.handler = async function handler() {
         service: "netlify-function",
         db: "netlify-blobs",
         error: "Storage error",
+        hint: "Set NETLIFY_BLOBS_SITE_ID and NETLIFY_BLOBS_TOKEN in Netlify UI if auto context is unavailable.",
+        envConfigured: Boolean(process.env.NETLIFY_BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID) && Boolean(process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_ACCESS_TOKEN),
         details: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString()
       })
