@@ -99,6 +99,18 @@
               <span class="chip">Delivery Manager</span><span class="chip">Directeur de projets</span><span class="chip">Programmes IT</span><span class="chip">Pilotage financier</span><span class="chip">Transformation SI</span><span class="chip">ERP</span><span class="chip">CRM</span><span class="chip">Cyber</span><span class="chip">Défense</span>
             </div>
           </section>
+          <section class="card">
+            <h2>Formation</h2>
+            <ul id="formationList"></ul>
+          </section>
+          <section class="card">
+            <h2>Outils</h2>
+            <div class="chips" id="toolsList"></div>
+          </section>
+          <section class="card">
+            <h2>Certifications</h2>
+            <ul id="certificationsList"></ul>
+          </section>
         </aside>
         <section class="xp">
           <div class="job">
@@ -127,6 +139,46 @@
     </article>
   </div>
   <script>
+    // Zone de mise a jour rapide du CV.
+    // Modifiez uniquement ces tableaux pour tenir a jour Formation / Outils / Certifications.
+    const cvData = {
+      formation: [
+        "Master / Diplome en systemes d'information et gestion de projets (a preciser)",
+        "Formation continue en delivery, gouvernance SI et pilotage de programmes"
+      ],
+      outils: [
+        "Jira",
+        "Confluence",
+        "Azure DevOps",
+        "Power BI",
+        "Excel avance",
+        "Suite Office 365",
+        "Git",
+        "CI/CD"
+      ],
+      certifications: [
+        "Scrum / Agile (a preciser)",
+        "ITIL (a preciser)",
+        "Certification cloud / securite (a preciser)"
+      ]
+    };
+
+    function renderList(id, items) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = items.map((item) => `<li>${item}</li>`).join("");
+    }
+
+    function renderChips(id, items) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = items.map((item) => `<span class="chip">${item}</span>`).join("");
+    }
+
+    renderList("formationList", cvData.formation);
+    renderChips("toolsList", cvData.outils);
+    renderList("certificationsList", cvData.certifications);
+
     const root = document.documentElement;
     const btn = document.getElementById('themeToggle');
     const saved = localStorage.getItem('cv-theme');
